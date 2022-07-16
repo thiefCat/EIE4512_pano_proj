@@ -103,6 +103,10 @@ def cylindricalWarp(img, K):
     # warp the image according to cylindrical coords
     return cv2.remap(img_rgba, B[:,:,0].astype(np.float32), B[:,:,1].astype(np.float32), cv2.INTER_AREA, borderMode=cv2.BORDER_TRANSPARENT)
   
+def cylindricalWarp_mask(img, K):
+    # returns the mask of cylindrical mapping
+    msk_before = np.full_like(img, 255)
+    return cylindricalWarp(msk_before, K)
 
 
 if __name__ == '__main__':
@@ -129,16 +133,18 @@ if __name__ == '__main__':
     for (index,img) in enumerate(imgs):
 
         h, w = img.shape[:2]
-        K = np.array([[400,0,w/2],[0,400,h/2],[0,0,1]]) # mock intrinsics
+        K = np.array([[600,0,w/2],[0,600,h/2],[0,0,1]]) # mock intrinsics
         # cyl, cyl_mask = cylindricalWarpImage(img, K)
         cyl = cylindricalWarp(img, K)
+        cyl_mask = cylindricalWarp_mask(img, K)
         imgs[index] = cyl
+        masks.append(cyl_mask)
 
         cv2.imshow('cyl{}'.format(str(index)), cyl)
         # cv2.imshow('msk', cyl_mask)
 
         cv2.imwrite('cylin_{}.png'.format(str(index)), np.uint8(cyl))
-        # cv2.imwrite('mask_{}.jpg'.format(str(index)), np.uint8(cyl_mask))
+        cv2.imwrite('mask_{}.jpg'.format(str(index)), np.uint8(cyl_mask))
 
     cv2.waitKey(0)
 
