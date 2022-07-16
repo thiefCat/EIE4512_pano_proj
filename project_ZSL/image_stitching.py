@@ -21,6 +21,7 @@ class Stitcher():
                 good_match.append(m)
         MIN_MATCH_COUNT = 5
         print('finding homography------')
+        print('number of good match:', len(good_match))
         if len(good_match) > MIN_MATCH_COUNT:
             dst_pts = np.float32([ kp1[m.queryIdx].pt for m in good_match ]).reshape(-1,1,2)
             src_pts = np.float32([ kp2[m.trainIdx].pt for m in good_match ]).reshape(-1,1,2)
@@ -65,12 +66,14 @@ class Stitcher():
 
         a = q.get()
         b = q.get()
+        print('number of stitch:', 1)
         prev = self.stitch(a, b, ratio)
 
         for i in range(size-2):
-            print(i)
+            print('number of stitch:', i+2)
             now = q.get()
             prev = self.stitch(prev, now, ratio)
+        print('-----complete----')
 
         return prev
 
@@ -86,18 +89,18 @@ class Stitcher():
     #     plt.imshow(out_img2)
     #     plt.show()
 
-# img1 = cv2.imread('/Users/zhaosonglin/Desktop/IMG_0912.jpeg')
-# img2 = cv2.imread('/Users/zhaosonglin/Desktop/IMG_0913.jpeg')
-img3 = cv2.imread('/Users/zhaosonglin/Desktop/frames/frame_85.jpg')
-img4 = cv2.imread('/Users/zhaosonglin/Desktop/frames/frame_106.jpg')
+img1 = cv2.imread('/Users/zhaosonglin/Desktop/IMG_1006.jpeg')
+img2 = cv2.imread('/Users/zhaosonglin/Desktop/IMG_1007.jpeg')
+img3 = cv2.imread('/Users/zhaosonglin/Desktop/IMG_1008.jpeg')
+# img4 = cv2.imread('/Users/zhaosonglin/Desktop/programming/python/project/project5-panorama-thiefCat-main/data/source007/3.jpg')
 # img5 = cv2.imread('/Users/zhaosonglin/Desktop/frames/frame_128.jpg')
 # img6 = cv2.imread('/Users/zhaosonglin/Desktop/frames/frame_149.jpg')
 # img7 = cv2.imread('/Users/zhaosonglin/Desktop/frames/frame_171.jpg')
-imgs = [img3, img4]
+imgs = [img1, img2, img3]
 # print(img3.shape)   # 768, 432
 # print(img4.shape)
 stitcher = Stitcher()
-res = stitcher.run(imgs, 0.5)
+res = stitcher.run(imgs, 0.4)
 # res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
 # a = stitcher.stitch(img1, img2, 0.3)
 # b = stitcher.stitch(a, img3, 0.3)
