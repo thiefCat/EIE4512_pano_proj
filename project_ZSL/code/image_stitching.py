@@ -22,7 +22,7 @@ class Stitcher():
         MIN_MATCH_COUNT = 5
         print('finding homography------')
         print('number of good match:', len(good_match))
-        if len(good_match) > MIN_MATCH_COUNT:
+        if len(good_match) >= MIN_MATCH_COUNT:
             dst_pts = np.float32([ kp1[m.queryIdx].pt for m in good_match ]).reshape(-1,1,2)
             src_pts = np.float32([ kp2[m.trainIdx].pt for m in good_match ]).reshape(-1,1,2)
             M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
@@ -38,7 +38,7 @@ class Stitcher():
         c2 = M @ np.array([w2, 0, 1])
         
         # output image size
-        H = max(h1, h2, math.ceil(c1[1]/c1[2]))
+        H = max(h1, h2, math.ceil(c1[1]/c1[2]), math.ceil(c2[1]/c2[2]))
         W = math.ceil(max(c1[0]/c1[2], c2[0]/c2[2]))
 
         dst = cv2.warpPerspective(img2, M, (W, H))
@@ -89,39 +89,39 @@ class Stitcher():
     #     plt.imshow(out_img2)
     #     plt.show()
 
-img1 = cv2.imread('/Users/zhaosonglin/Desktop/IMG_1006.jpeg')
-img2 = cv2.imread('/Users/zhaosonglin/Desktop/IMG_1007.jpeg')
-img3 = cv2.imread('/Users/zhaosonglin/Desktop/IMG_1008.jpeg')
-# img4 = cv2.imread('/Users/zhaosonglin/Desktop/programming/python/project/project5-panorama-thiefCat-main/data/source007/3.jpg')
-# img5 = cv2.imread('/Users/zhaosonglin/Desktop/frames/frame_128.jpg')
-# img6 = cv2.imread('/Users/zhaosonglin/Desktop/frames/frame_149.jpg')
-# img7 = cv2.imread('/Users/zhaosonglin/Desktop/frames/frame_171.jpg')
-imgs = [img1, img2, img3]
-# print(img3.shape)   # 768, 432
-# print(img4.shape)
-stitcher = Stitcher()
-res = stitcher.run(imgs, 0.4)
-# res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
-# a = stitcher.stitch(img1, img2, 0.3)
-# b = stitcher.stitch(a, img3, 0.3)
-# print(a.shape)
-
-
-plt.imshow(res)
-plt.show()
-
-# img_dir = '/Users/zhaosonglin/Desktop/programming/python/project/project5-panorama-thiefCat-main/data/source008'
-# names = os.listdir(img_dir)
-
-# imgs = []
-# for name in names:
-#     img_path = os.path.join(img_dir, name)
-#     image = cv2.imread(img_path)
-#     imgs.append(image)
-
+# img1 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_1.png')
+# img2 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_2.png')
+# img3 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_3.png')
+# img4 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_4.png')
+# img5 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_5.png')
+# img6 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_6.png')
+# # img7 = cv2.imread('/Users/zhaosonglin/Desktop/frames/frame_171.jpg')
+# imgs = [img1, img2, img3, img4, img5, img6]
+# # print(img3.shape)   # 768, 432
+# # print(img4.shape)
 # stitcher = Stitcher()
-# res = stitcher.run(imgs, 0.3)
-# res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
+# res = stitcher.run(imgs, 0.65)
+# # res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
+# # a = stitcher.stitch(img1, img2, 0.3)
+# # b = stitcher.stitch(a, img3, 0.3)
+# # print(a.shape)
+
+
 # plt.imshow(res)
 # plt.show()
+
+# # img_dir = '/Users/zhaosonglin/Desktop/programming/python/project/project5-panorama-thiefCat-main/data/source008'
+# # names = os.listdir(img_dir)
+
+# # imgs = []
+# # for name in names:
+# #     img_path = os.path.join(img_dir, name)
+# #     image = cv2.imread(img_path)
+# #     imgs.append(image)
+
+# # stitcher = Stitcher()
+# # res = stitcher.run(imgs, 0.3)
+# # res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
+# # plt.imshow(res)
+# # plt.show()
 
