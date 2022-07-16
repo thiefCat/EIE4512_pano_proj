@@ -9,13 +9,13 @@ from cylindrical import cylindricalWarpImage
 class Frame_selector:
 
     def __init__(self):
-        # basic
+        ''' basic'''
         self.path = None            # path of the video
         self.frame_set = None       # array of all frames ndarray
         self.frame_num = None       # total number of frames
         self.selected_frames = []   # indexes of interest frames
         self.f = None
-        # criterion
+        ''' criterion'''
         self.threshold = None       # threshold of ratio test
         self.max_length = None      # maxlength of interest points
         self.interest_num = None    # threshold of number of interest points
@@ -32,8 +32,7 @@ class Frame_selector:
         self.interest_num = interest_num
 
     def read_video(self, compress=5):
-        # read video file, return ndarray containing frames
-
+        ''' read video file, return ndarray containing frames'''
         capture = cv2.VideoCapture(self.path) 
         frame_set = []
 
@@ -46,7 +45,7 @@ class Frame_selector:
             # break from the loop. 
 
             if isTrue:
-                # record the frame_set
+                ''' record the frame_set'''
                 w,h,_ = frame.shape
                 frame = cv2.resize(frame, dsize = (h//compress, w//compress), interpolation=cv2.INTER_CUBIC)
                 frame = cv2.rotate(frame, cv2.ROTATE_180) 
@@ -64,7 +63,7 @@ class Frame_selector:
         return np.array(frame_set), len(frame_set)
 
     def play_video(self):
-        # play the video
+        ''' play the video'''
         for frame in self.frame_set:
             cv2.imshow('Video', frame)
             if cv2.waitKey(20) & 0xFF==ord('d'):
@@ -80,25 +79,25 @@ class Frame_selector:
     # binary search on frame_set -------------------------------------------------
 
     def __reach_critirion(self, frame1, frame2):
-        # check if two frame_set has at least 10 interest pts with small threshold
+        ''' check if two frame_set has at least 10 interest pts with small threshold'''
         _, good_indexes, _, _ = sift_matching(frame1, frame2, self.threshold, self.max_length)
         return len(good_indexes) > self.interest_num
 
     def search_frames(self):
-        # search in all the frames
+        ''' search in all the frames'''
         self._search_frames(0, self.frame_num-1)
 
     def _search_frames(self, start: int, end: int):
-        # do binary search on frame_set
-        # stop search if criterion reached
-        # (assumption: camera motion is oriented)
+        ''' do binary search on frame_set
+        stop search if criterion reached
+        (assumption: camera motion is oriented)'''
         self.__search(start, end)
 
         return self.selected_frames
 
 
     def __search(self, idx1, idx2):
-        # recursive search
+        ''' recursive search'''
         if (idx2-idx1 < 2) or self.__reach_critirion(self.frame_set[idx1], self.frame_set[idx2]):
             # criterion reached
             if idx1 == idx2:
@@ -116,25 +115,25 @@ class Frame_selector:
     # output --------------------------------------------
 
     def print_selected(self):
-        # print indexes of selected frames
+        ''' print indexes of selected frames'''
         print(self.selected_frames)
         return np.array(self.selected_frames)
 
     def show_selected_frames(self):
-        # imshow selected frames
+        ''' imshow selected frames'''
         for index in self.selected_frames:
             cv2.imshow('Frame {}'.format(str(index)), self.frame_set[index])
         cv2.waitKey(0)
 
     def output_selected_frames(self):
-        # returns selected frames
+        ''' returns selected frames'''
         frames = []
         for index in self.selected_frames:
             frames.append(self.frame_set[index])
         return np.array(frames)
     
     def save_frames(self):
-        # save selected frames
+        ''' save selected frames into computer'''
         for index in self.selected_frames:
             cv2.imwrite('frame_{}.jpg'.format(str(index)), np.uint8(self.frame_set[index]))
             

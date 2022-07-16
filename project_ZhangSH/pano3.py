@@ -140,16 +140,15 @@ def homo_point(u,v,T):
 def homogaphy_trans(img1, T):
     # calculate homography transform of img and mask
 
-    w, h, _ = img1.shape
+    w, h = img1.shape[:2]
     print('shape', img1.shape)
     w1, h1 = homo_point(0, 0, T)
-    w2, h2 = homo_point(0, h, T)
-    w3, h3 = homo_point(w, 0, T)
-    w4, h4 = homo_point(w, h, T)
+    w2, h2 = homo_point(0, w, T)
+    w3, h3 = homo_point(h, 0, T)
+    w4, h4 = homo_point(h, w, T)
     W = int(max(w1,w2,w3,w4, w))
     H = int(max(h1,h2,h3,h4, h))
-    # print(W,H)
-
+    print(W,H)
 
     mask = np.ones_like(img1)
     mask_trans = cv2.warpPerspective(mask, T, dsize = (W, H))
