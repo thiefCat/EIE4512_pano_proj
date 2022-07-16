@@ -1,8 +1,11 @@
+# this file implements transformations
+# cylindrical transformation, affine transformation, projective transformation
+
 import numpy as np
 import cv2 as cv2
 import math
 
-import image_stitching
+import image_stitching_copy
 
 
 '''
@@ -143,7 +146,7 @@ if __name__ == '__main__':
         cv2.imshow('cyl{}'.format(str(index)), cyl)
         # cv2.imshow('msk', cyl_mask)
 
-        cv2.imwrite('cylin_{}.png'.format(str(index)), np.uint8(cyl))
+        cv2.imwrite('cylin_{}.jpg'.format(str(index)), np.uint8(cyl))
         cv2.imwrite('mask_{}.jpg'.format(str(index)), np.uint8(cyl_mask))
 
     cv2.waitKey(0)
