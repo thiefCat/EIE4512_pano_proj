@@ -58,7 +58,7 @@ class Stitcher():
 
         return dst
 
-    def run(self, imgs, ratio):
+    def run_stitch(self, imgs, ratio):
         q = queue.Queue()
         for img in imgs:
             q.put(img)
