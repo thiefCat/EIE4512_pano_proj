@@ -1,19 +1,19 @@
-# this file implements transformations (Cylindrical and projective)
+# this file implements cylindrical transformations 
 
 import numpy as np
 import cv2 as cv2
 import math
 
-from image_stitching_copy import Stitcher
-
 class Transformer:
 
     def __init__(self, imgs, f):
+        '''inits with a set of imgs and camers focal val'''
+
         self.L = len(imgs)                  # number of images
 
         self.imgs = imgs                    # input images
         self.h, self.w = imgs[0].shape[:2]  # set height and width
-        self.f = f                          # set focus
+        self.f = f                          # set focal
 
         self.M = np.array([[1,0,0],[0,1,0],[0,0,1]])     # matrix for homography transform
 
@@ -26,7 +26,7 @@ class Transformer:
         self.cyl_masks =   [None] * self.L
         self.trans_imgs =  [None] * self.L
         self.trans_masks = [None] * self.L
-        self.img_dic = {'cyl': self.trans_imgs, 'msk': self.trans_masks}
+        
 
     def set_M(self, M):
         '''set the homography transformation matrix'''
@@ -105,11 +105,11 @@ class Transformer:
         h_, w_ = img.shape[:2]
         # pixel coordinates
         y_i, x_i = np.indices((h_, w_))
-        X = np.stack([x_i,y_i,np.ones_like(x_i)], axis=-1).reshape(h_*w_, 3) # to homog
+        X = np.stack([x_i, y_i, np.ones_like(x_i)], axis=-1).reshape(h_*w_, 3) # to homog
         Kinv = np.linalg.inv(K) 
         X = Kinv.dot(X.T).T # normalized coords
         # calculate cylindrical coords (sin\theta, h, cos\theta)
-        A = np.stack([np.sin(X[:,0]), X[:,1], np.cos(X[:,0])],axis=-1).reshape(w_*h_,3)
+        A = np.stack([np.sin(X[:,0]), X[:,1], np.cos(X[:,0])],axis=-1).reshape(w_*h_, 3)
         B = K.dot(A.T).T # project back to image-pixels plane
         # back from homog coords
         B = B[:,:-1] / B[:,[-1]]
@@ -134,21 +134,25 @@ class Transformer:
         msk_before = np.full_like(img, 255)
         mask = self._cylindrical_warp(msk_before)
         if erosion > 0:
-            kernel = np.ones((3,3))
+            kernel = np.ones((3, 3))
             mask = cv2.erode(mask, kernel)
         return mask
 
 
     # output ---------------------------------------------
 
-    def output_cyl(self, type = 'cyl', save = False):
-        '''imshow final imgs'''
-        out_imgs = self.img_dic[type]
-        for i, cyl in enumerate(out_imgs):
-            cv2.imshow('{}_{}'.format(type, str(i)), cyl)
+    def output_cyl(self, msk = True, save = False):
+        '''imshow final imgs/ type_: cyl & msk'''
+
+        for i, cyl in enumerate(self.trans_imgs):
+            cv2.imshow('cyl_{}'.format(str(i)), cyl)
+            if msk:
+                cv2.imshow('msk_{}'.format(str(i)), self.trans_masks[i])
             
             if save:
-                cv2.imwrite('{}_{}.png'.format(type, str(i)), np.uint8(cyl))
+                cv2.imwrite('cyl_{}.png'.format(str(i)), np.uint8(cyl))
+                if msk:
+                    cv2.imwrite('msk_{}.png'.format(str(i)), np.uint8(self.trans_masks[i]))
         cv2.waitKey(0)
 
 
@@ -169,41 +173,9 @@ if __name__ == '__main__':
 
 
 
-    TT = Transformer(imgs, 800)
+    TT = Transformer(imgs, f = 800)
     TT.set_M(np.array([[1, 0.04, 0],  [0, 1, 0],  [0, 0.0002, 1]]))
     TT.construct_cylindricals()
     TT.add_homography()
-    TT.output_cyl('cyl')
-    TT.output_cyl('msk')
+    TT.output_cyl(msk=False)
 
-'''
-    for (index,img) in enumerate(imgs):
-
-        h, w = img.shape[:2]
-        K = np.array([[700,0,w/2],
-                    [0,700,h/2],
-                    [0,0,1]]) # mock intrinsics
-
-        M = np.array([[1, 0.04, 0],
-                    [0, 1, 0],
-                    [0, 0.0002, 1]])
-
-        # do cylindrical transformation
-        cyl = cylindrical_warp(img, K)
-        cyl_mask = __cylindrical_warp_mask(img, K)
-
-        # do homography on the cylindrical images
-        cyl = projective_warp(cyl, M)
-        cyl_mask = projective_warp(cyl_mask, M)
-
-        imgs[index] = cyl
-        masks.append(cyl_mask)
-
-        cv2.imshow('cyl{}'.format(str(index)), cyl)
-        cv2.imshow('msk', cyl_mask)
-
-        # cv2.imwrite('cylin_{}.png'.format(str(index)), np.uint8(cyl))
-        # cv2.imwrite('mask_{}.jpg'.format(str(index)), np.uint8(cyl_mask))
-
-    cv2.waitKey(0)
-'''

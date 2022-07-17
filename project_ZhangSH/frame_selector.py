@@ -18,12 +18,12 @@ class Frame_selector:
         self.max_length = None       # maxlength of interest points
         self.interest_thres = None   # threshold of number of interest points
 
-    def set_path(self, path):
+    def set_path(self, path=None):
         self.path = path
     
-    def set_focal(self, focal):
+    def set_focal(self, focal=1000):
         self.f = focal
-    
+
     def set_threshold(self, sift_thres: float, max_length: int, interest_thres):
         self.sift_thres = sift_thres         # threshold of the ratio test
         self.max_length = max_length         # max number of interest point
@@ -45,7 +45,7 @@ class Frame_selector:
                 frame_set_origin.append(frame) # original
                 frame_cps = cv2.resize(frame, dsize = (w//proxy_compress, h//proxy_compress), interpolation=cv2.INTER_CUBIC)
                 frame_set_proxy.append(frame_cps)    # compressed
-          
+
             else:
                 break
 
@@ -54,7 +54,7 @@ class Frame_selector:
 
         self.frame_set_proxy  = np.array(frame_set_proxy)
         self.frame_set_origin = np.array(frame_set_origin)
-        self.L        = len(frame_set_proxy)
+        self.L                = len(frame_set_proxy)
 
         return self.frame_set_proxy, self.frame_set_origin, self.L 
 
@@ -65,12 +65,13 @@ class Frame_selector:
             if cv2.waitKey(20) & 0xFF==ord('d'):
                 break 
     
-    def display_frame(self, frame_idx: int):
+    def show_frame(self, frame_idx: int, ifshow=True):
         if frame_idx > self.L-1:
             print('ERROR: frame index out of range')
         else:
             cv2.imshow('{} frame'.format(str(frame_idx)), self.frame_set_proxy[frame_idx])
             cv2.waitKey(0)
+        return self.frame_set_proxy[frame_idx]
 
 
     # criterion for matching ---------------------------------------------
@@ -121,7 +122,7 @@ class Frame_selector:
 
     def search_frames(self):
         ''' search in all the frames'''
-        self._search_frames(0, self.L-1)
+        self._search_frames(1, self.L-2)
 
     def _search_frames(self, start: int, end: int):
         ''' do binary search on frame_set
@@ -176,13 +177,17 @@ class Frame_selector:
         return np.array(output_frames)
 
 
-VV = Frame_selector()
-VV.set_path('video\IMG_4804.MOV')
-VV.set_focal(28) 
-VV.load_vedio(proxy_compress=5)
-VV.set_threshold(sift_thres=0.5, max_length=50, interest_thres=10)
-# VV.play_video()
-# VV.display_frame(100)
-VV.search_frames()
-VV.print_selected()
-frames = VV.output_selected_frames(show=True, if_original=False)
+## ------------------------------------------------------------
+
+if __name__ == '__main__':
+
+    FF = Frame_selector()
+    FF.set_path('video\IMG_4804.MOV')
+    FF.set_focal(28) 
+    FF.load_vedio(proxy_compress=5)
+    FF.set_threshold(sift_thres=0.5, max_length=50, interest_thres=10)
+    # FF.play_video()
+    # FF.show_frame(100)
+    FF.search_frames()
+    FF.print_selected()
+    frames = FF.output_selected_frames(show=True, if_original=False)
