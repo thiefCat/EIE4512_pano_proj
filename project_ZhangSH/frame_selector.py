@@ -145,7 +145,7 @@ class Frame_selector:
             return idx1, idx2
 
         else:
-            print(idx1,idx2)
+            # print(idx1,idx2)
             self.__search(idx1, (idx2+idx1)//2)
             self.__search((idx2+idx1)//2, idx2)
     
@@ -168,13 +168,19 @@ class Frame_selector:
             output_frames.append(frame_set[index])
 
             if show:
-                pass
                 cv2.imshow('frame_{}'.format(str(index)), frame_set[index])            
             if save:
                 cv2.imwrite('frame_{}.png'.format(str(index)), np.uint8(frame_set[index]))
 
         cv2.waitKey(0)
-        return np.array(output_frames)
+        return output_frames # list
+    
+    def run_select_frame(self, proxy_compress=5, sift_thres=0.5, max_length=50, interest_thres=10):
+        '''main method'''
+        self.load_vedio(proxy_compress)
+        self.set_threshold(sift_thres, max_length, interest_thres)
+        self.search_frames()
+        return self.output_selected_frames(show=False, if_original=True)
 
 
 ## ------------------------------------------------------------
@@ -183,11 +189,14 @@ if __name__ == '__main__':
 
     FF = Frame_selector()
     FF.set_path('video\IMG_4804.MOV')
-    FF.set_focal(28) 
-    FF.load_vedio(proxy_compress=5)
-    FF.set_threshold(sift_thres=0.5, max_length=50, interest_thres=10)
+    # FF.set_focal(3000) 
+    # FF.load_vedio(proxy_compress=5)
+    # FF.set_threshold(sift_thres=0.5, max_length=50, interest_thres=10)
     # FF.play_video()
     # FF.show_frame(100)
-    FF.search_frames()
-    FF.print_selected()
-    frames = FF.output_selected_frames(show=True, if_original=False)
+    # FF.search_frames()
+    # FF.print_selected()
+    # frames = FF.output_selected_frames(show=True, if_original=False)
+    FF.run_select_frame(proxy_compress=5,
+                        sift_thres=0.5,
+                        interest_thres=10)
