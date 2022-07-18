@@ -32,6 +32,7 @@ class Frame_selector:
     def load_vedio(self, proxy_compress=1):
         ''' read video file, return ndarray containing frames'''
         capture = cv2.VideoCapture(self.path) 
+        print('read success:', capture.isOpened())
         frame_set_proxy  = []
         frame_set_origin = []
 
@@ -41,7 +42,7 @@ class Frame_selector:
             if isTrue:
                 ''' record the frame_set'''
                 h,w = frame.shape[:2]
-                frame = cv2.rotate(frame, cv2.ROTATE_180) 
+                # frame = cv2.rotate(frame, cv2.ROTATE_180) 
                 frame_set_origin.append(frame) # original
                 frame_cps = cv2.resize(frame, dsize = (w//proxy_compress, h//proxy_compress), interpolation=cv2.INTER_CUBIC)
                 frame_set_proxy.append(frame_cps)    # compressed
@@ -145,7 +146,7 @@ class Frame_selector:
             return idx1, idx2
 
         else:
-            # print(idx1,idx2)
+            print(idx1,idx2)
             self.__search(idx1, (idx2+idx1)//2)
             self.__search((idx2+idx1)//2, idx2)
     
@@ -157,7 +158,7 @@ class Frame_selector:
         return np.array(self.selected_frames)
 
 
-    def output_selected_frames(self, show=True, save=False, if_original=False):
+    def output_selected_frames(self, save=False, if_original=False):
         ''' imshow and return selected frames, save if save==True'''
         # choose if output uncompressed img
         frame_set = {True: self.frame_set_origin, 
@@ -167,35 +168,42 @@ class Frame_selector:
         for index in self.selected_frames:
             output_frames.append(frame_set[index])
 
-            if show:
-                cv2.imshow('frame_{}'.format(str(index)), frame_set[index])            
+            # if show:
+            #     cv2.imshow('frame_{}'.format(str(index)), frame_set[index])            
             if save:
                 cv2.imwrite('frame_{}.png'.format(str(index)), np.uint8(frame_set[index]))
 
-        cv2.waitKey(0)
+        # cv2.waitKey(0)
         return output_frames # list
     
     def run_select_frame(self, proxy_compress=5, sift_thres=0.5, max_length=50, interest_thres=10):
         '''main method'''
+        # print('load')
         self.load_vedio(proxy_compress)
+        # print('set_threshold')
         self.set_threshold(sift_thres, max_length, interest_thres)
+        # print('search_frame')
         self.search_frames()
-        return self.output_selected_frames(show=False, if_original=True)
+        # print('output')
+        res = self.output_selected_frames(if_original=True)
+        print('length of the imgs:', len(res))
+        # print('complete')
+        return res
 
 ## ------------------------------------------------------------
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
-    FF = Frame_selector()
-    FF.set_path('video\IMG_4804.MOV')
-    # FF.set_focal(3000) 
-    # FF.load_vedio(proxy_compress=5)
-    # FF.set_threshold(sift_thres=0.5, max_length=50, interest_thres=10)
-    # FF.play_video()
-    # FF.show_frame(100)
-    # FF.search_frames()
-    # FF.print_selected()
-    # frames = FF.output_selected_frames(show=True, if_original=False)
-    FF.run_select_frame(proxy_compress=5,
-                        sift_thres=0.5,
-                        interest_thres=10)
+#     FF = Frame_selector()
+#     FF.set_path('video\IMG_4804.MOV')
+#     # FF.set_focal(3000) 
+#     # FF.load_vedio(proxy_compress=5)
+#     # FF.set_threshold(sift_thres=0.5, max_length=50, interest_thres=10)
+#     # FF.play_video()
+#     # FF.show_frame(100)
+#     # FF.search_frames()
+#     # FF.print_selected()
+#     # frames = FF.output_selected_frames(show=True, if_original=False)
+#     FF.run_select_frame(proxy_compress=5,
+#                         sift_thres=0.5,
+#                         interest_thres=10)
