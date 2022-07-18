@@ -58,23 +58,23 @@ class Stitcher():
 
         return dst
 
-    # def run_stitch(self, imgs, ratio):
-    #     q = queue.Queue()
-    #     for img in imgs:
-    #         q.put(img)
-    #     size = q.qsize()
+    def run_stitch_swquencial(self, imgs, ratio):
+        q = queue.Queue()
+        for img in imgs:
+            q.put(img)
+        size = q.qsize()
 
-    #     a = q.get()
-    #     b = q.get()
-    #     print('number of stitch:', 1)
-    #     prev = self.stitch(a, b, ratio)
+        a = q.get()
+        b = q.get()
+        print('number of stitch:', 1)
+        prev = self.stitch(a, b, ratio)
 
-    #     for i in range(size-2):
-    #         print('number of stitch:', i+2)
-    #         now = q.get()
-    #         prev = self.stitch(prev, now, ratio)
-    #     print('-----complete----')
-    #     return prev
+        for i in range(size-2):
+            print('number of stitch:', i+2)
+            now = q.get()
+            prev = self.stitch(prev, now, ratio)
+        print('-----complete----')
+        return prev
 
     def pair_stitch(self, q, ratio):
         # print(q.qsize())
@@ -91,7 +91,7 @@ class Stitcher():
                 a.put(q.get())
             return self.pair_stitch(a, ratio)
     
-    def run_stitch(self, imgs, ratio):
+    def run_stitch_divide(self, imgs, ratio):
         q = queue.Queue()
         for img in imgs:
             q.put(img)

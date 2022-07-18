@@ -7,16 +7,17 @@ from frame_selector import Frame_selector
 
 print('-------selecting frames-------')
 FF = Frame_selector()
-FF.set_path('/Users/zhaosonglin/Desktop/data/IMG_1022.MOV')
+FF.set_path('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/videos/7.18_8.MOV')
 imgs = FF.run_select_frame(proxy_compress=5,
                            sift_thres=0.5,
                            interest_thres=5)
 
-print('------cylindrical warping------')
 
+
+print('------cylindrical warping------')
 for i in range(len(imgs)):
     img = imgs[i]
-    img = mycyl.cylindricalWarping(img, 1500)
+    img = mycyl.cylindricalWarping(img, 1544)
     imgs[i] = img
 
 
@@ -42,7 +43,7 @@ for i in range(len(imgs)):
 
 print('-----warping images------')
 stitcher = image_stitching.Stitcher()
-res = stitcher.run_stitch(imgs, 0.6)
+res = stitcher.run_stitch_divide(imgs, 0.6)
 res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
 plt.imshow(res)
 plt.show()
