@@ -8,11 +8,12 @@ class Stitcher():
     def __init__(self):
         pass
     def stitch(self, img1, img2, ratio = 0.3):
-        print('creating sift-----')
+        print('-------stitching start-------')
+        print('-creating sift-')
         sift = cv2.SIFT_create()
         kp1, des1 = sift.detectAndCompute(img1, None)
         kp2, des2 = sift.detectAndCompute(img2, None)
-        print('matching-----')
+        print('-matching-')
         match = cv2.BFMatcher(normType=cv2.NORM_L2)
         matches = match.knnMatch(des1, des2, k=2)
         good_match = []
@@ -20,7 +21,7 @@ class Stitcher():
             if m.distance < ratio * n.distance:   
                 good_match.append(m)
         MIN_MATCH_COUNT = 5
-        print('finding homography------')
+        print('-finding homography-')
         print('number of good match:', len(good_match))
         if len(good_match) >= MIN_MATCH_COUNT:
             dst_pts = np.float32([ kp1[m.queryIdx].pt for m in good_match ]).reshape(-1,1,2)
@@ -31,7 +32,7 @@ class Stitcher():
 
         # self.draw(dst_pts, src_pts, good_match)
 
-        print('warping images')
+        print('-warping images-')
         h1, w1 = img1.shape[:2]
         h2, w2 = img2.shape[:2]
         c1 = M @ np.array([w2, h2, 1])
@@ -39,7 +40,7 @@ class Stitcher():
         
         # output image size
         H = max(h1, h2, math.ceil(c1[1]/c1[2]), math.ceil(c2[1]/c2[2]))
-        W = math.ceil(max(c1[0]/c1[2], c2[0]/c2[2]))
+        W = math.ceil(max(c1[0]/c1[2], c2[0]/c2[2], w1))
 
         dst = cv2.warpPerspective(img2, M, (W, H))
         # dst[0:img1.shape[0], 0:img1.shape[1]] = img1
@@ -52,30 +53,53 @@ class Stitcher():
         # print(h1, w1)
         # print(img1.shape)
         # print(img1_.shape)
-
         img1_[:h1, :w1] = img1[:h1, :w1]
         dst[mask==1] = img1_[mask==1]
 
         return dst
 
+    # def run_stitch(self, imgs, ratio):
+    #     q = queue.Queue()
+    #     for img in imgs:
+    #         q.put(img)
+    #     size = q.qsize()
+
+    #     a = q.get()
+    #     b = q.get()
+    #     print('number of stitch:', 1)
+    #     prev = self.stitch(a, b, ratio)
+
+    #     for i in range(size-2):
+    #         print('number of stitch:', i+2)
+    #         now = q.get()
+    #         prev = self.stitch(prev, now, ratio)
+    #     print('-----complete----')
+    #     return prev
+
+    def pair_stitch(self, q, ratio):
+        # print(q.qsize())
+        if q.qsize() == 1:
+            return q.get()
+        else:
+            a = queue.Queue()
+            while q.qsize() > 1:
+                left = q.get()
+                right = q.get()
+                res = self.stitch(left, right, ratio)
+                a.put(res)
+            if q.qsize() == 1:
+                a.put(q.get())
+            return self.pair_stitch(a, ratio)
+    
     def run_stitch(self, imgs, ratio):
         q = queue.Queue()
         for img in imgs:
             q.put(img)
-        size = q.qsize()
-
-        a = q.get()
-        b = q.get()
-        print('number of stitch:', 1)
-        prev = self.stitch(a, b, ratio)
-
-        for i in range(size-2):
-            print('number of stitch:', i+2)
-            now = q.get()
-            prev = self.stitch(prev, now, ratio)
+        res = self.pair_stitch(q, ratio)
         print('-----complete----')
+        return res
 
-        return prev
+
 
     # def draw(self, kp1, kp2, good_match):
     #     h1, w1 = img1.shape[:2]
@@ -89,26 +113,33 @@ class Stitcher():
     #     plt.imshow(out_img2)
     #     plt.show()
 
-# img1 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_1.png')
-# img2 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_2.png')
-# img3 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_3.png')
-# img4 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_4.png')
-# img5 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_5.png')
-# img6 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_6.png')
-# # img7 = cv2.imread('/Users/zhaosonglin/Desktop/frames/frame_171.jpg')
-# imgs = [img1, img2, img3, img4, img5, img6]
-# # print(img3.shape)   # 768, 432
-# # print(img4.shape)
+
+
+# img1 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_0.png')
+# img2 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_1.png')
+# img3 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_2.png')
+# img4 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_3.png')
+# # # img5 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_5.png')
+# # # img6 = cv2.imread('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/source_cyl_warp_f400/cylin_6.png')
+# # # img7 = cv2.imread('/Users/zhaosonglin/Desktop/frames/frame_171.jpg')
+# imgs = [img1, img2, img3, img4]
+
 # stitcher = Stitcher()
-# res = stitcher.run(imgs, 0.65)
-# # res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
-# # a = stitcher.stitch(img1, img2, 0.3)
-# # b = stitcher.stitch(a, img3, 0.3)
-# # print(a.shape)
+# res = stitcher.run_stitch(imgs, 0.4)
+# res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
+# # # a = stitcher.stitch(img1, img2, 0.3)
+# # # b = stitcher.stitch(a, img3, 0.3)
+# # # print(a.shape)
 
 
 # plt.imshow(res)
 # plt.show()
+
+
+
+
+
+
 
 # # img_dir = '/Users/zhaosonglin/Desktop/programming/python/project/project5-panorama-thiefCat-main/data/source008'
 # # names = os.listdir(img_dir)

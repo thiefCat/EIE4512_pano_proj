@@ -5,12 +5,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 from frame_selector import Frame_selector
 
+print('-------selecting frames-------')
 FF = Frame_selector()
-FF.set_path('/Users/zhaosonglin/Desktop/IMG_1004.MOV')
+FF.set_path('/Users/zhaosonglin/Desktop/data/IMG_1022.MOV')
 imgs = FF.run_select_frame(proxy_compress=5,
-                    sift_thres=0.5,
-                    interest_thres=10)
-print('-----')
+                           sift_thres=0.5,
+                           interest_thres=5)
+
+print('------cylindrical warping------')
+
+for i in range(len(imgs)):
+    img = imgs[i]
+    img = mycyl.cylindricalWarping(img, 1500)
+    imgs[i] = img
+
+
+# for img in imgs:
+#     cv2.imshow('img', img)
+#     cv2.waitKey(0)
 
 # img1 = cv2.imread('/Users/zhaosonglin/Desktop/IMG_1006.jpeg')
 # img2 = cv2.imread('/Users/zhaosonglin/Desktop/IMG_1007.jpeg')
@@ -28,8 +40,9 @@ print('-----')
 #     # cv2.imwrite('cylin_{}.png'.format(str(index)), np.uint8(cyl))
 #     # cv2.imwrite('mask_{}.jpg'.format(str(index)), np.uint8(cyl_mask))
 
+print('-----warping images------')
 stitcher = image_stitching.Stitcher()
-res = stitcher.run_stitch(imgs, 0.5)
+res = stitcher.run_stitch(imgs, 0.6)
 res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
 plt.imshow(res)
 plt.show()
