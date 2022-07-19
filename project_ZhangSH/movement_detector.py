@@ -77,6 +77,8 @@ imgs = [frame1, frame2]
 def loss_func(imgs, index=0):
     img_cur = imgs[index]
     img_nxt = imgs[index+1]
+    def val(x):
+        return img_cur
 
 def solve_loss_opt(imgs):
 

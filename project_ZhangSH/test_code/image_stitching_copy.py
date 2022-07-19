@@ -60,3 +60,10 @@ class Stitcher():
             prev = self.stitch(prev, now, ratio)
 
         return prev
+
+img1 = cv2.imread('data\source001\source001_01.jpg')
+img2 = cv2.imread('data\source001\source001_02.jpg')
+
+S = Stitcher()
+img = S.stitch(img1, img2, 0.3)
+cv2.imshow('')

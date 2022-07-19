@@ -7,7 +7,7 @@ from frame_selector import Frame_selector
 
 print('-------selecting frames-------')
 FF = Frame_selector()
-FF.set_path('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/videos/7.18_8.MOV')
+FF.set_path('videos\\7.18_1.MOV')
 imgs = FF.run_select_frame(proxy_compress=5,
                            sift_thres=0.5,
                            interest_thres=5)
