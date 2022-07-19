@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 import queue
 import math
+from skimage import transform
 
 class Stitcher():
     def __init__(self):
@@ -30,8 +30,6 @@ class Stitcher():
         else:
             print('not enough matches are found:', len(good_match))
 
-        # self.draw(dst_pts, src_pts, good_match)
-
         print('-warping images-')
         h1, w1 = img1.shape[:2]
         h2, w2 = img2.shape[:2]
@@ -42,39 +40,40 @@ class Stitcher():
         H = max(h1, h2, math.ceil(c1[1]/c1[2]), math.ceil(c2[1]/c2[2]))
         W = math.ceil(max(c1[0]/c1[2], c2[0]/c2[2], w1))
 
-        dst = cv2.warpPerspective(img2, M, (W, H))
+        dst = cv2.warpPerspective(img2, M , (W, H))
         # dst[0:img1.shape[0], 0:img1.shape[1]] = img1
         dst_ = np.amax(dst, axis=2)  # left size
         # print(dst_.shape)
         mask = np.zeros((H, W))     # left size
         mask[dst_ == 0] = 1    
         img1_= np.zeros((H, W, 3))
-
+        
         # print(h1, w1)
         # print(img1.shape)
         # print(img1_.shape)
         img1_[:h1, :w1] = img1[:h1, :w1]
         dst[mask==1] = img1_[mask==1]
 
-        return dst
+        return [dst, c1, c2]
 
-    def run_stitch_swquencial(self, imgs, ratio):
-        q = queue.Queue()
-        for img in imgs:
-            q.put(img)
-        size = q.qsize()
 
-        a = q.get()
-        b = q.get()
-        print('number of stitch:', 1)
-        prev = self.stitch(a, b, ratio)
+    # def run_stitch_swquencial(self, imgs, ratio):
+    #     q = queue.Queue()
+    #     for img in imgs:
+    #         q.put(img)
+    #     size = q.qsize()
 
-        for i in range(size-2):
-            print('number of stitch:', i+2)
-            now = q.get()
-            prev = self.stitch(prev, now, ratio)
-        print('-----complete----')
-        return prev
+    #     a = q.get()
+    #     b = q.get()
+    #     print('number of stitch:', 1)
+    #     prev = self.stitch(a, b, ratio)
+
+    #     for i in range(size-2):
+    #         print('number of stitch:', i+2)
+    #         now = q.get()
+    #         prev = self.stitch(prev, now, ratio)
+    #     print('-----complete----')
+    #     return prev
 
     def pair_stitch(self, q, ratio):
         # print(q.qsize())
@@ -83,23 +82,52 @@ class Stitcher():
         else:
             a = queue.Queue()
             while q.qsize() > 1:
-                left = q.get()
-                right = q.get()
+                left = q.get()[0]
+                right = q.get()[0]
                 res = self.stitch(left, right, ratio)
                 a.put(res)
             if q.qsize() == 1:
                 a.put(q.get())
             return self.pair_stitch(a, ratio)
-    
+
     def run_stitch_divide(self, imgs, ratio):
         q = queue.Queue()
         for img in imgs:
-            q.put(img)
+            q.put([img, None, None])
+        H = imgs[0].shape[0]
         res = self.pair_stitch(q, ratio)
+        img = res[0]
+        return img
+
+    def run_stitch_divide_with_warpping(self, imgs, ratio):
+        q = queue.Queue()
+        for img in imgs:
+            q.put([img, None, None])
+        H = imgs[0].shape[0]
+        res = self.pair_stitch(q, ratio)
+        img = res[0]
+
+        c1 = res[1]
+        h1 = c1[1]/c1[2]
+        w1 = c1[0]/c1[2]
+        c2 = res[2]
+        h2 = c2[1]/c2[2]
+        w2 = c2[0]/c2[2]
+        # src_pts = np.float32([(0,0), (0, H), (w2, h2), (w1, h1)])
+        src_pts = np.float32([(0,0), (0, H), (w2, h2), (w1, h1)])
+        # print((h1, w1))
+        # print((h2, w2))
+        dst_pts = np.float32([(0,0), (0, H), ((w1+w2)/2, 0), ((w1+w2)/2, H)])
+        # print(((w1+w2)/2, 0))
+        # print((w1+w2)/2, H)
+        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+        W = math.ceil((w1+w2)/2)
+        dst = cv2.warpPerspective(img, M, (W, H))
+
+        # W = math.ceil((w1+w2)/2)
+        # dst = cv2.warpPerspective(img, M, (2*W, 2*H))
         print('-----complete----')
-        return res
-
-
+        return dst
 
     # def draw(self, kp1, kp2, good_match):
     #     h1, w1 = img1.shape[:2]

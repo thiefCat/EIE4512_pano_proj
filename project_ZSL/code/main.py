@@ -7,10 +7,10 @@ from frame_selector import Frame_selector
 
 print('-------selecting frames-------')
 FF = Frame_selector()
-FF.set_path('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/videos/7.18_8.MOV')
-imgs = FF.run_select_frame(proxy_compress=5,
-                           sift_thres=0.5,
-                           interest_thres=5)
+FF.set_path('/Users/zhaosonglin/Documents/GitHub/EIE4512_pano_proj/final_code/videos/7.18_9.MOV')
+imgs = FF.run_select_frame(proxy_compress=3,
+                        sift_thres=0.3,
+                        interest_thres=200)
 
 
 
@@ -43,7 +43,8 @@ for i in range(len(imgs)):
 
 print('-----warping images------')
 stitcher = image_stitching.Stitcher()
-res = stitcher.run_stitch_divide(imgs, 0.6)
+res = stitcher.run_stitch_divide_with_warpping(imgs, 0.6)
+# print(res)
 res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
 plt.imshow(res)
 plt.show()
