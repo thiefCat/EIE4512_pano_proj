@@ -5,36 +5,34 @@ import numpy as np
 
 class Frame_selector:
 
-    # settings ----------------------------------------------------------------------
-
     def __init__(self):
         ''' basic'''
-        self.path = ''               # path of the video
-        self.frames_proxy = []    # array of all frames ndarray
-        self.frames_origin = []   # frames without compression
+        self.path = None             # path of the video
+        self.frame_set_proxy = None  # array of all frames ndarray
+        self.frame_set_origin = None # frames without compression
         self.L = None                # total number of frames
         self.selected_frames = []    # indexes of interest frames
-
+        self.f = None
         ''' criterion'''
         self.sift_thres = None       # threshold of ratio test
+        self.max_length = None       # maxlength of interest points
         self.interest_thres = None   # threshold of number of interest points
-        
-        self.motion = []             # translation motion of the selected frames
 
     def set_path(self, path=None):
         self.path = path
     
-    def set_threshold(self, sift_thres: float, interest_thres):
+    def set_focal(self, focal=1000):
+        self.f = focal
+
+    def set_threshold(self, sift_thres: float, max_length: int, interest_thres):
         self.sift_thres = sift_thres         # threshold of the ratio test
+        self.max_length = max_length         # max number of interest point
         self.interest_thres = interest_thres # threshold number of interest point
-
-
-    # video methods --------------------------------------------------------------------------------
 
     def load_vedio(self, proxy_compress=1):
         ''' read video file, return ndarray containing frames'''
         capture = cv2.VideoCapture(self.path) 
-        # print('read success:', capture.isOpened())
+        print('read success:', capture.isOpened())
         frame_set_proxy  = []
         frame_set_origin = []
 
@@ -44,8 +42,8 @@ class Frame_selector:
             if isTrue:
                 ''' record the frame_set'''
                 h,w = frame.shape[:2]
-                frame = cv2.rotate(frame, cv2.ROTATE_180) ##
-                frame_set_origin.append(frame)       # original
+                # frame = cv2.rotate(frame, cv2.ROTATE_180) 
+                frame_set_origin.append(frame) # original
                 frame_cps = cv2.resize(frame, dsize = (w//proxy_compress, h//proxy_compress), interpolation=cv2.INTER_CUBIC)
                 frame_set_proxy.append(frame_cps)    # compressed
 
@@ -55,31 +53,31 @@ class Frame_selector:
         capture.release()
         cv2.destroyAllWindows()
 
-        self.frames_proxy  = np.array(frame_set_proxy)
-        self.frames_origin = np.array(frame_set_origin)
+        self.frame_set_proxy  = np.array(frame_set_proxy)
+        self.frame_set_origin = np.array(frame_set_origin)
         self.L                = len(frame_set_proxy)
 
-        return self.frames_proxy, self.frames_origin, self.L 
+        return self.frame_set_proxy, self.frame_set_origin, self.L 
 
     def play_video(self):
         ''' play the video (proxy one)'''        
-        for frame in self.frames_proxy:
+        for frame in self.frame_set_proxy:
             cv2.imshow('Video', frame)
             if cv2.waitKey(20) & 0xFF==ord('d'):
                 break 
     
-    def show_frame(self, frame_idx: int, ifshow=False):
+    def show_frame(self, frame_idx: int, ifshow=True):
         if frame_idx > self.L-1:
             print('ERROR: frame index out of range')
-        elif ifshow == True:
-            cv2.imshow('{} frame'.format(str(frame_idx)), self.frames_proxy[frame_idx])
+        else:
+            cv2.imshow('{} frame'.format(str(frame_idx)), self.frame_set_proxy[frame_idx])
             cv2.waitKey(0)
-        return self.frames_proxy[frame_idx]
+        return self.frame_set_proxy[frame_idx]
 
 
-    # selecting frames ---------------------------------------------
+    # criterion for matching ---------------------------------------------
 
-    def __sift_matching(self, img1, img2, threshold: float):
+    def __sift_matching(self, img1, img2, threshold: float, max_length: int):
         '''find interest pairs using the SIFT algorithm'''
 
         sift = cv2.SIFT_create()
@@ -89,13 +87,12 @@ class Frame_selector:
 
         # create matches
         matches = cv2.BFMatcher().knnMatch(descriptors_1, descriptors_2, k = 2) # tuple
-
         # apply ratio test (Lowe's: nearest/next_nearest)
         good_match = []
         good_indexes = []
-
         for (m, n) in matches:
-            if (m.distance < threshold * n.distance):
+            # max_length = 30 # max number of corr pts
+            if (m.distance < threshold * n.distance) and (len(good_match) < max_length):
                 good_match.append([m])
 
                 # get corres indexes in ketpts
@@ -110,22 +107,17 @@ class Frame_selector:
 
         return (img3, good_indexes, keypoints_1, keypoints_2)
 
+    def __get_criterion(self, idx1, idx2):
+        '''generate a function of criterion for interest point'''
+        return 200 * self.interest_thres * np.log1p((idx2-idx1)) / self.L
+        # return self.interest_thres
 
     def __reach_critirion(self, idx1, idx2):
         ''' check if two frame_set has at least 10 interest pts with small threshold'''
-        frame1 = self.frames_proxy[idx1]
-        frame2 = self.frames_proxy[idx2]
-        img3, good_indexes, kps1, kps2 = self.__sift_matching(frame1, frame2, self.sift_thres)
-        # criterion for matching -------
-        reach = len(good_indexes) > (len(kps1) + len(kps2)) / self.interest_thres # 300 initially
-        if reach:
-            cv2.imshow('match_{}-{}'.format(str(idx1),str(idx2)), img3)
-            # cv2.imwrite('match_{}-{}.png'.format(str(idx1),str(idx2)), np.uint8(img3))
-            cv2.waitKey(0)
-            print('# of kps1: ', len(kps1))
-            print('# of kps2: ', len(kps2))
-            print('# of good: ', len(good_indexes))
-        return reach 
+        frame1 = self.frame_set_proxy[idx1]
+        frame2 = self.frame_set_proxy[idx2]
+        _, good_indexes, _, _ = self.__sift_matching(frame1, frame2, self.sift_thres, self.max_length)
+        return len(good_indexes) > self.__get_criterion(idx1, idx2)
 
     # binary search on frame_set -------------------------------------------------
 
@@ -158,42 +150,43 @@ class Frame_selector:
             self.__search(idx1, (idx2+idx1)//2)
             self.__search((idx2+idx1)//2, idx2)
     
-
     # output --------------------------------------------
-    
-    def imshow_selected(self):
-        '''imshow selected frames'''
-        for index in self.selected_frames:
-            cv2.imshow('frame_{}'.format(str(index)), self.frames_proxy[index])
-        cv2.waitKey(0)
-        return
+
+    def print_selected(self):
+        ''' print indexes of selected frames'''
+        print(self.selected_frames)
+        return np.array(self.selected_frames)
+
 
     def output_selected_frames(self, save=False, if_original=False):
         ''' imshow and return selected frames, save if save==True'''
         # choose if output uncompressed img
-        frame_set = {True: self.frames_origin, 
-                     False: self.frames_proxy}[if_original]
+        frame_set = {True: self.frame_set_origin, 
+                     False: self.frame_set_proxy}[if_original]
         
         output_frames = []
         for index in self.selected_frames:
-            output_frames.append(frame_set[index])         
+            output_frames.append(frame_set[index])
+
+            # if show:
+            #     cv2.imshow('frame_{}'.format(str(index)), frame_set[index])            
             if save:
                 cv2.imwrite('frame_{}.png'.format(str(index)), np.uint8(frame_set[index]))
-        return output_frames # type = list
+
+        # cv2.waitKey(0)
+        return output_frames # list
     
-    def run_select_frame(self, if_original=False, proxy_compress=5, sift_thres=0.5, interest_thres=10):
+    def run_select_frame(self, proxy_compress=5, sift_thres=0.5, max_length=50, interest_thres=10):
         '''main method'''
         # print('load')
         self.load_vedio(proxy_compress)
         # print('set_threshold')
-        self.set_threshold(sift_thres, interest_thres)
+        self.set_threshold(sift_thres, max_length, interest_thres)
         # print('search_frame')
         self.search_frames()
         # print('output')
         res = self.output_selected_frames(if_original=True)
-        print('length of the imgs:', self.L)
-        print('selcted frames:', self.selected_frames)
-        self.imshow_selected()
+        print('length of the imgs:', len(res))
         # print('complete')
         return res
 
@@ -202,17 +195,15 @@ class Frame_selector:
 # if __name__ == '__main__':
 
 #     FF = Frame_selector()
-#     FF.set_path('videos\\7.18_4.MOV') 
+#     FF.set_path('video\IMG_4804.MOV')
+#     # FF.set_focal(3000) 
 #     # FF.load_vedio(proxy_compress=5)
-#     # FF.set_threshold(sift_thres=0.5, interest_thres=10)
-#     ## FF.play_video()
-#     ## FF.show_frame(100)
+#     # FF.set_threshold(sift_thres=0.5, max_length=50, interest_thres=10)
+#     # FF.play_video()
+#     # FF.show_frame(100)
 #     # FF.search_frames()
 #     # FF.print_selected()
-#     # frames = FF.output_selected_frames(if_original=False)
-
-
-#     FF.run_select_frame(proxy_compress=3,
-#                         sift_thres=0.3,
-#                         interest_thres=200)
-
+#     # frames = FF.output_selected_frames(show=True, if_original=False)
+#     FF.run_select_frame(proxy_compress=5,
+#                         sift_thres=0.5,
+#                         interest_thres=10)
