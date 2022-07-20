@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 import queue
 import math
+import matplotlib.pyplot as plt
 
 class Stitcher():
     def __init__(self):
@@ -35,30 +35,53 @@ class Stitcher():
         print('-warping images-')
         h1, w1 = img1.shape[:2]
         h2, w2 = img2.shape[:2]
-        c1 = M @ np.array([w2, h2, 1])
-        c2 = M @ np.array([w2, 0, 1])
+        c1 = M @ np.array([w2, h2, 1])    # right bottom point after transformation
+        c2 = M @ np.array([w2, 0, 1])     # right top point after transformation
+        
         
         # output image size
         H = max(h1, h2, math.ceil(c1[1]/c1[2]), math.ceil(c2[1]/c2[2]))
         W = math.ceil(max(c1[0]/c1[2], c2[0]/c2[2], w1))
 
-        dst = cv2.warpPerspective(img2, M, (W, H))
+        dst = cv2.warpPerspective(img2, M , (W, H))
         # dst[0:img1.shape[0], 0:img1.shape[1]] = img1
         dst_ = np.amax(dst, axis=2)  # left size
         # print(dst_.shape)
         mask = np.zeros((H, W))     # left size
         mask[dst_ == 0] = 1    
         img1_= np.zeros((H, W, 3))
-
+        
         # print(h1, w1)
         # print(img1.shape)
         # print(img1_.shape)
         img1_[:h1, :w1] = img1[:h1, :w1]
         dst[mask==1] = img1_[mask==1]
 
+
+        # calibrate the image    
+        H1 = c1[1]/c1[2]
+        H2 = c2[1]/c2[2]
+        W1 = c1[0]/c1[2]
+        W2 = c2[0]/c2[2]
+        # src_pts = np.float32([(0,0), (0, H), (w2, h2), (w1, h1)])
+        src_pts = np.float32([(0,0), (0, h1), (W2, H2), (W1, H1)])
+        # print((h1, w1))
+        # print((h2, w2))
+        dst_pts = np.float32([(0,0), (0, h1), (((W1+W2)/2), 0), ((W1+W2)/2, h1)])
+        # print(((w1+w2)/2, 0))
+        # print((w1+w2)/2, H)
+        N, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+        W = math.ceil((W1+W2)/2)
+        dst = cv2.warpPerspective(dst, N, (W, h1))
+
+        # plt.imshow(dst)
+        # plt.show()
+
         return dst
 
-    def run_stitch_swquencial(self, imgs, ratio):
+
+
+    def run_stitch_sequencial(self, imgs, ratio):
         q = queue.Queue()
         for img in imgs:
             q.put(img)
@@ -90,15 +113,15 @@ class Stitcher():
             if q.qsize() == 1:
                 a.put(q.get())
             return self.pair_stitch(a, ratio)
-    
+
     def run_stitch_divide(self, imgs, ratio):
         q = queue.Queue()
         for img in imgs:
             q.put(img)
         res = self.pair_stitch(q, ratio)
-        print('-----complete----')
-        return res
-
+        img = res
+        print('-----complete------')
+        return img
 
 
     # def draw(self, kp1, kp2, good_match):

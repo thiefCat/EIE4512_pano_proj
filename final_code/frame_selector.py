@@ -37,7 +37,7 @@ class Frame_selector:
 
     # video methods --------------------------------------------------------------------------------
 
-    def load_vedio(self, proxy_compress=4, rotate=False):
+    def load_vedio(self, proxy_compress=4, rotate=True):
         ''' read video file, return ndarray containing frames'''
         print('-start loading video...')
         capture = cv2.VideoCapture(self.path) 
@@ -189,21 +189,29 @@ class Frame_selector:
     
     def run_select_frame(self, if_original=False, proxy_compress=5, sift_thres=0.5, interest_thres=10):
         '''main method'''
-        # print('load')
         self.load_vedio(proxy_compress)
-        # print('set_threshold')
         self.set_threshold(sift_thres, interest_thres)
-        # print('search_frame')
         self.search_frames()
-        # print('output')
         res = self.output_selected_frames(if_original=True)
         print('length of the imgs:', len(self.selected_frames))
         print('selcted frames:', self.selected_frames)
-        # self.imshow_selected()
-        # print('complete')
         return res
+    
+    def out_neighb_frames(self):
+        '''output neighboring frames of the selected frames'''
+        neigb = []
+        for index in self.selected_frames:
+            frame1 = self.frames_origin[index-1]
+            frame2 = self.frames_origin[index+1]
+            cv2.imshow('frame1', frame1)
+            cv2.imshow('frame2', frame2)
+            cv2.waitKey(0)
+            neigb.append((frame1, frame2))
+        return neigb
+
 
 ## -----------------------------------------------------------------
+
 '''
 if __name__ == '__main__':
 
@@ -221,4 +229,9 @@ if __name__ == '__main__':
     FF.run_select_frame(proxy_compress=3,
                         sift_thres=0.3,
                         interest_thres=200)
+
+    FF.out_neighb_frames()
+
 '''
+
+
