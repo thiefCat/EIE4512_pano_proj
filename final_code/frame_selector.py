@@ -154,7 +154,7 @@ class Frame_selector:
             return idx1, idx2
 
         else:
-            print(idx1,idx2)
+            print('-comparing frames: ', idx1,idx2)
             self.__search(idx1, (idx2+idx1)//2)
             self.__search((idx2+idx1)//2, idx2)
     
