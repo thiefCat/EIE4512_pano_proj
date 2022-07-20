@@ -10,10 +10,12 @@ class Frame_selector:
     def __init__(self):
         ''' basic'''
         self.path = ''               # path of the video
-        self.frames_proxy = []    # array of all frames ndarray
-        self.frames_origin = []   # frames without compression
+        self.frames_proxy = []       # frames with compression
+        self.frames_origin = []      # frames with no compression
         self.L = None                # total number of frames
+        self.fps = None              # frame rate
         self.selected_frames = []    # indexes of interest frames
+        self.video_size = (0,0)      # height and width of video
 
         ''' criterion'''
         self.sift_thres = None       # threshold of ratio test
@@ -25,15 +27,21 @@ class Frame_selector:
         self.path = path
     
     def set_threshold(self, sift_thres: float, interest_thres):
-        self.sift_thres = sift_thres         # threshold of the ratio test
-        self.interest_thres = interest_thres # threshold number of interest point
+        self.sift_thres = sift_thres         # threshold of the ratio test in SIFT
+        self.interest_thres = interest_thres # threshold number related to interest point
+
+    def exposure_time(self):
+        if self.fps is not None:
+            return 1 / self.fps
 
 
     # video methods --------------------------------------------------------------------------------
 
-    def load_vedio(self, proxy_compress=1):
+    def load_vedio(self, proxy_compress=4, rotate=False):
         ''' read video file, return ndarray containing frames'''
+        print('-start loading video...')
         capture = cv2.VideoCapture(self.path) 
+        self.fps = capture.get(cv2.CAP_PROP_FPS)
         # print('read success:', capture.isOpened())
         frame_set_proxy  = []
         frame_set_origin = []
@@ -44,7 +52,8 @@ class Frame_selector:
             if isTrue:
                 ''' record the frame_set'''
                 h,w = frame.shape[:2]
-                frame = cv2.rotate(frame, cv2.ROTATE_180) ##
+                if rotate:
+                    frame = cv2.rotate(frame, cv2.ROTATE_180)
                 frame_set_origin.append(frame)       # original
                 frame_cps = cv2.resize(frame, dsize = (w//proxy_compress, h//proxy_compress), interpolation=cv2.INTER_CUBIC)
                 frame_set_proxy.append(frame_cps)    # compressed
@@ -58,6 +67,7 @@ class Frame_selector:
         self.frames_proxy  = np.array(frame_set_proxy)
         self.frames_origin = np.array(frame_set_origin)
         self.L                = len(frame_set_proxy)
+        print('-video length: {} frames'.format(self.L))
 
         return self.frames_proxy, self.frames_origin, self.L 
 
@@ -116,16 +126,12 @@ class Frame_selector:
         frame1 = self.frames_proxy[idx1]
         frame2 = self.frames_proxy[idx2]
         img3, good_indexes, kps1, kps2 = self.__sift_matching(frame1, frame2, self.sift_thres)
-        # criterion for matching -------
+        # two different criterion for matching -------
         reach = len(good_indexes) > (len(kps1) + len(kps2)) / self.interest_thres # 300 initially
-        # if reach:
-        #     cv2.imshow('match_{}-{}'.format(str(idx1),str(idx2)), img3)
-        #     # cv2.imwrite('match_{}-{}.png'.format(str(idx1),str(idx2)), np.uint8(img3))
-        #     cv2.waitKey(0)
-        #     print('# of kps1: ', len(kps1))
-        #     print('# of kps2: ', len(kps2))
-        #     print('# of good: ', len(good_indexes))
-        return reach 
+        reach1 = len(good_indexes) > 15 * self.interest_thres * np.log1p((idx2-idx1)) / self.L
+        reach2 = len(good_indexes) > 10
+
+        return reach2
 
     # binary search on frame_set -------------------------------------------------
 
@@ -154,12 +160,12 @@ class Frame_selector:
             return idx1, idx2
 
         else:
-            print(idx1,idx2)
-            self.__search(idx1, (idx2+idx1)//2)
-            self.__search((idx2+idx1)//2, idx2)
+            print('-comparing frames: ', idx1,idx2)
+            self.__search(idx1, (idx2+idx1)//2) # check left
+            self.__search((idx2+idx1)//2, idx2) # check right
     
 
-    # output --------------------------------------------
+    # output --------------------------------------------------------
     
     def imshow_selected(self):
         '''imshow selected frames'''
@@ -197,7 +203,7 @@ class Frame_selector:
         # print('complete')
         return res
 
-## ------------------------------------------------------------
+## -----------------------------------------------------------------
 '''
 if __name__ == '__main__':
 
