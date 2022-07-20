@@ -77,7 +77,7 @@ class Stitcher():
         # plt.imshow(dst)
         # plt.show()
 
-        return dst
+        return dst   # size: (h1, (W1+W2/2)
 
 
 
