@@ -1,97 +1,95 @@
+import numpy as np
 import cv2 as cv2
-import numpy as np 
-from scipy.optimize import minimize
+import sys
 
 from frame_selector import Frame_selector
 
-# FF = Frame_selector()
-# FF.set_path('video\IMG_4804.MOV')
-# FF.load_vedio(proxy_compress=5)
-# frame1 = FF.show_frame(100)
-# frame2 = FF.show_frame(101)
-# frame3 = FF.show_frame(102)
-# frame4 = FF.show_frame(103)
-# frame20 = FF.show_frame(120)
-# cv2.imwrite('frame_1.png', np.uint8(frame1))
-# cv2.imwrite('frame_2.png', np.uint8(frame2))
-# cv2.imwrite('frame_3.png', np.uint8(frame3))
-# cv2.imwrite('frame_4.png', np.uint8(frame4))
-# cv2.imwrite('frame_20.png', np.uint8(frame20))
-
-
-# frame1 = cv2.imread('test_motion_rec\IMG_4862.JPG') # o
-# frame2 = cv2.imread('test_motion_rec\IMG_4863.JPG') # r [-1.72224348  0.26868462]
-# frame3 = cv2.imread('test_motion_rec\IMG_4864.JPG') # u [-1.57923728  0.24837391]
-# frame4 = cv2.imread('test_motion_rec\IMG_4865.JPG') # d [-1.39219948  0.21832606]
-# frame5 = cv2.imread('test_motion_rec\IMG_4866.JPG') # l [-1.46757246  0.23058398]
 
 frame1 = cv2.imread('frame_1.png')
 frame2 = cv2.imread('frame_2.png')
-# h,w = frame1.shape[:2]
-# frame2 = frame1[1:,1:]
-# frame3 = frame1[:-1,:-1]
-# frame4 = frame1[:h-1,1:]
-# frame5 = frame1[1:,:w-1]
+
+
+def find_move(frame1, frame2):
+    '''find the movement of frame2 w.r.t. frame1'''
+    h, w = frame1.shape[:2]
+    dist = min(w,h) // 5
+    cropped = frame2[h//2-dist:h//2+dist, w//2-dist:w//2+dist]
+    
+    frame1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+    cropped = cv2.cvtColor(cropped, cv2.COLOR_BGR2GRAY)
+
+    h, w = frame1.shape[:2]
+    x_move, y_move = 0, 0
+    curr_dif = sys.maxsize
+
+    for x in range(-dist, dist):
+        for y in range(-dist, +dist):
+
+            # compare the cropped section with a part in original image
+            diff= np.abs(
+                cropped - frame1[h//2+x-dist:h//2+x+dist, w//2+y-dist:w//2+y+dist]).sum()
+
+            if diff < curr_dif:
+                print(diff, 'x=', x, 'y=', y)
+                curr_dif = diff
+                x_move, y_move = x, y
+                # x,y is the point in frame1 that corres to the mid of img2 
+                # (on the right of the center in frame1)
+
+    print(x_move, y_move)
+    return x_move, y_move
+
+def _find_xy(frame1, crop2, d0:int, x0:int, y0:int, step:int):
+    print('new recursion d0----------: ', d0)
+
+    if step <= 2:
+        return x0, y0
+
+    else:
+        curr_dif = sys.maxsize
+        for x in range(x0-step, x0+step, step//3):
+
+            for y in range(y0-step, y0+step, step//3):
+
+                print([x0-d0+x-(x0+d0+x), y0-d0+y-(y0+d0+y)])
+
+                crop1 = frame1[x0-d0+x:x0+d0+x, y0-d0+y:y0+d0+y]
+                # crop1 = frame1[:2*d0, :2*d0]
+                print('shape1: ',crop1.shape)
+                print('shape2: ',crop2.shape)
+
+                # compare the crop1 section with a part in original image
+                diff = np.abs(crop1 - crop2).sum()
+
+                if diff < curr_dif:
+                    print('find smaller ----------')
+                    print(diff, 'x=', x, 'y=', y)
+                    curr_dif = diff
+                    x_move, y_move = x, y
+                    
+        _find_xy(frame1, crop2, d0, x0+x_move, y0+y_move, step//3)
+
+
+def find_move1(frame1, frame2):
+    '''find the movement of frame2 w.r.t. frame1'''
+    h, w = frame1.shape[:2]
+    d0 = min(w,h) // 5
+    crop2 = frame2[h//2-d0:h//2+d0, w//2-d0:w//2+d0]
+    
+    frame1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+    crop2 = cv2.cvtColor(crop2, cv2.COLOR_BGR2GRAY)
+
+    h, w = frame1.shape[:2]
+    x_move, y_move = 0, 0
+
+    x_move, y_move = _find_xy(frame1, crop2, d0, x0=h//2, y0=w//2, step=d0) # recursive
+
+    return x_move, y_move
 
 
 
 
-def get_mid(img):
-    h, w = img.shape[:2]
-    return img[h//2-20:h//2+20, w//2-20:w//2+20]
-
-# frame1 = get_mid(frame1)
-# frame2 = get_mid(frame2)
-
-cv2.imshow('frame_1.png', frame1)
-cv2.imshow('frame_2.png', frame2)
-cv2.waitKey(0)
-
-imgs = [frame1, frame2]
-
-
-# def loss_func(imgs, index=0):
-#     '''objective function'''
-#     img_cur = imgs[index]
-#     img_nxt = imgs[index+1]
-
-#     intensity_cur = img_cur.min(2)
-#     intensity_nxt = img_nxt.min(2)
-#     gred_x = ((intensity_cur[:,1:] - intensity_cur[:,:-1])[1:,:])
-#     gred_y = ((intensity_cur[1:,:] - intensity_cur[:-1,:])[:,1:])
-#     opt_flow = ((intensity_nxt - intensity_cur)[1:,1:])
-#     # cv2.imshow('gred_x', gred_x)
-#     # cv2.imshow('gred_y', gred_y)
-#     # cv2.imshow('optical flow', opt_flow)
-#     # cv2.waitKey(0)
-#     def val(x):
-#         '''objective value for specific frames'''   
-#         # loss = (x[0]*gred_x + x[1]*gred_y + (opt_flow))**2
-#         loss = ((x[0]*gred_x + x[1]*gred_y + (opt_flow) ).sum())**2
-
-#         print(loss.sum())
-#         return loss.sum()
-
-#     return val
-
-def loss_func(imgs, index=0):
-    img_cur = imgs[index]
-    img_nxt = imgs[index+1]
-    def val(x):
-        return img_cur
-
-def solve_loss_opt(imgs):
-
-    D0 = np.array([0,0])
-    args = [imgs, 0]
-    cons = ()
-    res = minimize(loss_func(args[0], args[1]), D0, method='nelder-mead', constraints=cons)
-    return res
-
-res = solve_loss_opt(imgs)
-print(res)
-print(res.fun)
-print(res.success)
-print(res.x)
+xm, ym = find_move(frame1, frame2)
+# find_move1(frame1, frame2)
 
 

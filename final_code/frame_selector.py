@@ -82,7 +82,7 @@ class Frame_selector:
     def __sift_matching(self, img1, img2, threshold: float):
         '''find interest pairs using the SIFT algorithm'''
 
-        sift = cv2.xfeatures2d.SIFT_create()
+        sift = cv2.SIFT_create()
 
         keypoints_1, descriptors_1 = sift.detectAndCompute(img1, None)
         keypoints_2, descriptors_2 = sift.detectAndCompute(img2, None)
@@ -118,13 +118,13 @@ class Frame_selector:
         img3, good_indexes, kps1, kps2 = self.__sift_matching(frame1, frame2, self.sift_thres)
         # criterion for matching -------
         reach = len(good_indexes) > (len(kps1) + len(kps2)) / self.interest_thres # 300 initially
-        if reach:
-            cv2.imshow('match_{}-{}'.format(str(idx1),str(idx2)), img3)
-            # cv2.imwrite('match_{}-{}.png'.format(str(idx1),str(idx2)), np.uint8(img3))
-            cv2.waitKey(0)
-            print('# of kps1: ', len(kps1))
-            print('# of kps2: ', len(kps2))
-            print('# of good: ', len(good_indexes))
+        # if reach:
+        #     cv2.imshow('match_{}-{}'.format(str(idx1),str(idx2)), img3)
+        #     # cv2.imwrite('match_{}-{}.png'.format(str(idx1),str(idx2)), np.uint8(img3))
+        #     cv2.waitKey(0)
+        #     print('# of kps1: ', len(kps1))
+        #     print('# of kps2: ', len(kps2))
+        #     print('# of good: ', len(good_indexes))
         return reach 
 
     # binary search on frame_set -------------------------------------------------
@@ -191,18 +191,18 @@ class Frame_selector:
         self.search_frames()
         # print('output')
         res = self.output_selected_frames(if_original=True)
-        print('length of the imgs:', self.L)
+        print('length of the imgs:', len(self.selected_frames))
         print('selcted frames:', self.selected_frames)
-        self.imshow_selected()
+        # self.imshow_selected()
         # print('complete')
         return res
 
 ## ------------------------------------------------------------
-
+'''
 if __name__ == '__main__':
 
     FF = Frame_selector()
-    FF.set_path('videos\\7.18_4.MOV') 
+    FF.set_path('videos\\7.18_8.MOV') 
     # FF.load_vedio(proxy_compress=5)
     # FF.set_threshold(sift_thres=0.5, interest_thres=10)
     ## FF.play_video()
@@ -215,4 +215,4 @@ if __name__ == '__main__':
     FF.run_select_frame(proxy_compress=3,
                         sift_thres=0.3,
                         interest_thres=200)
-
+'''
