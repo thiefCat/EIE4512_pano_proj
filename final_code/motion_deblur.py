@@ -48,18 +48,20 @@ def wiener_deblur_color(blurred, L=35, K=0.1):
     '''deblur color img (wiener filter)'''
     H = motion_process(blurred.shape[:2], L)
     result = np.zeros_like(blurred)
-    result[:,:,0] = wiener_filter(blurred[:,:,0], H, K)
-    result[:,:,1] = wiener_filter(blurred[:,:,1], H, K)
-    result[:,:,2] = wiener_filter(blurred[:,:,2], H, K)
+    for i in range(3):
+        layer = wiener_filter(blurred[:,:,i], H, K)
+        layer[layer > 255] = 255
+        result[:,:,i] = layer
     return result
 
 def inverse_deblur_color(blurred, L=35, eps=1e-3):
     '''deblur color img (inverse filter)'''
     H = motion_process(blurred.shape[:2], L)
     result = np.zeros_like(blurred)
-    result[:,:,0] = inverse_filter(blurred[:,:,0], H, eps)
-    result[:,:,1] = inverse_filter(blurred[:,:,1], H, eps)
-    result[:,:,2] = inverse_filter(blurred[:,:,2], H, eps)
+    for i in range(3):
+        layer = inverse_filter(blurred[:,:,i], H, eps)
+        layer[layer > 255] = 255
+        result[:,:,i] = layer
     return result
 
 def test():
