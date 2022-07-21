@@ -42,6 +42,7 @@ class Frame_selector:
         print('-start loading video...')
         capture = cv2.VideoCapture(self.path) 
         self.fps = capture.get(cv2.CAP_PROP_FPS)
+        print('-fps:', self.fps)
         # print('read success:', capture.isOpened())
         frame_set_proxy  = []
         frame_set_origin = []
@@ -129,9 +130,8 @@ class Frame_selector:
         # two different criterion for matching -------
         reach = len(good_indexes) > (len(kps1) + len(kps2)) / self.interest_thres # 300 initially
         reach1 = len(good_indexes) > 15 * self.interest_thres * np.log1p((idx2-idx1)) / self.L
-        reach2 = len(good_indexes) > 10
 
-        return reach2
+        return reach1
 
     # binary search on frame_set -------------------------------------------------
 
@@ -203,9 +203,9 @@ class Frame_selector:
         for index in self.selected_frames:
             frame1 = self.frames_origin[index-1]
             frame2 = self.frames_origin[index+1]
-            cv2.imshow('frame1', frame1)
-            cv2.imshow('frame2', frame2)
-            cv2.waitKey(0)
+            # cv2.imshow('frame1', frame1)
+            # cv2.imshow('frame2', frame2)
+            # cv2.waitKey(0)
             neigb.append((frame1, frame2))
         return neigb
 
@@ -230,7 +230,7 @@ if __name__ == '__main__':
                         sift_thres=0.3,
                         interest_thres=200)
 
-    FF.out_neighb_frames()
+    neigb_frames = FF.out_neighb_frames()
 
 '''
 
