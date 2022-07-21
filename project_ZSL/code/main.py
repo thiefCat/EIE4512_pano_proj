@@ -43,8 +43,8 @@ for i in range(len(imgs)):
 
 print('-----stitching images------')
 stitcher = image_stitching.Stitcher()
-res = stitcher.run_stitch_sequencial(imgs, 0.6)
-# res = stitcher.run_stitch_divide(imgs[:6], 0.6)
+res = stitcher.run_stitch_sequencial(imgs[:8], 0.6)
+# res = stitcher.run_stitch_divide(imgs[:8], 0.6)
 # print(res)
 res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
 plt.imshow(res)
