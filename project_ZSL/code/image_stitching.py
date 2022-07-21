@@ -58,21 +58,21 @@ class Stitcher():
         dst[mask==1] = img1_[mask==1]
 
 
-        # calibrate the image    
-        H1 = c1[1]/c1[2]
-        H2 = c2[1]/c2[2]
-        W1 = c1[0]/c1[2]
-        W2 = c2[0]/c2[2]
-        # src_pts = np.float32([(0,0), (0, H), (w2, h2), (w1, h1)])
-        src_pts = np.float32([(0,0), (0, h1), (W2, H2), (W1, H1)])
-        # print((h1, w1))
-        # print((h2, w2))
-        dst_pts = np.float32([(0,0), (0, h1), (((W1+W2)/2), 0), ((W1+W2)/2, h1)])
-        # print(((w1+w2)/2, 0))
-        # print((w1+w2)/2, H)
-        N, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
-        W = math.ceil((W1+W2)/2)
-        dst = cv2.warpPerspective(dst, N, (W, h1))
+        # # calibrate the image    
+        # H1 = c1[1]/c1[2]
+        # H2 = c2[1]/c2[2]
+        # W1 = c1[0]/c1[2]
+        # W2 = c2[0]/c2[2]
+        # # src_pts = np.float32([(0,0), (0, H), (w2, h2), (w1, h1)])
+        # src_pts = np.float32([(0,0), (0, h1), (W2, H2), (W1, H1)])
+        # # print((h1, w1))
+        # # print((h2, w2))
+        # dst_pts = np.float32([(0,0), (0, h1), (((W1+W2)/2), 0), ((W1+W2)/2, h1)])
+        # # print(((w1+w2)/2, 0))
+        # # print((w1+w2)/2, H)
+        # N, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+        # W = math.ceil((W1+W2)/2)
+        # dst = cv2.warpPerspective(dst, N, (W, h1))
 
         # plt.imshow(dst)
         # plt.show()
