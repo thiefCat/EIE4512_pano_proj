@@ -67,7 +67,7 @@ class Frame_selector:
 
         self.frames_proxy  = np.array(frame_set_proxy)
         self.frames_origin = np.array(frame_set_origin)
-        self.L                = len(frame_set_proxy)
+        self.L             = len(frame_set_proxy)
         print('-video length: {} frames'.format(self.L))
 
         return self.frames_proxy, self.frames_origin, self.L 
@@ -127,8 +127,9 @@ class Frame_selector:
         frame1 = self.frames_proxy[idx1]
         frame2 = self.frames_proxy[idx2]
         img3, good_indexes, kps1, kps2 = self.__sift_matching(frame1, frame2, self.sift_thres)
+        # cv2.imwrite('match_demo_{}-{}.png'.format(idx1,idx2), np.uint8(img3))
         # two different criterion for matching -------
-        reach = len(good_indexes) > (len(kps1) + len(kps2)) / self.interest_thres # 300 initially
+        reach = len(good_indexes) > (len(kps1) + len(kps2)) / self.interest_thres
         reach1 = len(good_indexes) > 15 * self.interest_thres * np.log1p((idx2-idx1)) / self.L
 
         return reach1
@@ -137,42 +138,54 @@ class Frame_selector:
 
     def search_frames(self):
         ''' search in all the frames'''
-        self._search_frames(1, self.L-2)
+        self._search_frames(2, self.L-3)
 
     def _search_frames(self, start: int, end: int):
         ''' do binary search on frame_set
         stop search if criterion reached
         (assumption: camera motion is oriented)'''
+        self.selected_frames.append(start)
+        self.selected_frames.append(end)
+
         self.__search(start, end)
+
+        self.selected_frames = sorted(self.selected_frames)
 
         return self.selected_frames
 
 
     def __search(self, idx1, idx2):
         ''' recursive search'''
-        if (idx2-idx1 < 2) or self.__reach_critirion(idx1, idx2):
-            # criterion reached
-            if idx1 == idx2:
-                self.selected_frames.append(idx1)
-                return idx1, -1
-
-            self.selected_frames.append(idx2)                
-            return idx1, idx2
+        
+        if ((idx2-idx1 < 2) or self.__reach_critirion(idx1, idx2))\
+            and (idx2-idx1) < self.L//2:
+            # criterion reached 
+            return              
 
         else:
+            self.selected_frames.append((idx2+idx1)//2)
             print('-comparing frames: ', idx1,idx2)
             self.__search(idx1, (idx2+idx1)//2) # check left
             self.__search((idx2+idx1)//2, idx2) # check right
+            
+    # def __search(self, idx1, idx2):
+    #     ''' recursive search'''
+    #     if (idx2-idx1 < 2) or self.__reach_critirion(idx1, idx2):
+    #         # criterion reached
+    #         if idx1 == idx2:
+    #             self.selected_frames.append(idx1)
+    #             return idx1, -1
+
+    #         self.selected_frames.append(idx2)                
+    #         return idx1, idx2
+
+    #     else:
+    #         print('-comparing frames: ', idx1,idx2)
+    #         self.__search(idx1, (idx2+idx1)//2) # check left
+    #         self.__search((idx2+idx1)//2, idx2) # check right
     
 
     # output --------------------------------------------------------
-    
-    def imshow_selected(self):
-        '''imshow selected frames'''
-        for index in self.selected_frames:
-            cv2.imshow('frame_{}'.format(str(index)), self.frames_proxy[index])
-        cv2.waitKey(0)
-        return
 
     def output_selected_frames(self, save=False, if_original=False):
         ''' imshow and return selected frames, save if save==True'''
@@ -212,26 +225,36 @@ class Frame_selector:
 
 ## -----------------------------------------------------------------
 
-'''
-if __name__ == '__main__':
 
-    FF = Frame_selector()
-    FF.set_path('videos\\7.18_8.MOV') 
-    # FF.load_vedio(proxy_compress=5)
-    # FF.set_threshold(sift_thres=0.5, interest_thres=10)
-    ## FF.play_video()
-    ## FF.show_frame(100)
-    # FF.search_frames()
-    # FF.print_selected()
-    # frames = FF.output_selected_frames(if_original=False)
+# if __name__ == '__main__':
+
+#     FF = Frame_selector()
+#     FF.set_path('videos\\7.14_1.MOV') 
+#     # FF.load_vedio(proxy_compress=5)
+#     # FF.set_threshold(sift_thres=0.5, interest_thres=10)
+#     ## FF.play_video()
+#     ## FF.show_frame(100)
+#     # FF.search_frames()
+#     # FF.print_selected()
+#     frames = FF.output_selected_frames(if_original=False)
 
 
-    FF.run_select_frame(proxy_compress=3,
-                        sift_thres=0.3,
-                        interest_thres=200)
+#     FF.run_select_frame(proxy_compress=3,
+#                         sift_thres=0.3,
+#                         interest_thres=200)
 
-    neigb_frames = FF.out_neighb_frames()
+#     neigb_frames = FF.out_neighb_frames()
 
-'''
+#     FF.output_selected_frames(save=True)
+
+#     # img1, img2 = frames[1], frames[2]
+#     # (img3, good_indexes, keypoints_1, keypoints_2) = FF.__sift_matching(img1, img2, threshold=0.5)
+#     # cv2.imshow(img3)
+#     # cv2.imwrite('match_demo_0.png', np.uint8(img3))
+#     # cv2.waitKey(0)
+
+
+
+
 
 
