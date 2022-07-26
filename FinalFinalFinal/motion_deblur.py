@@ -15,6 +15,7 @@ def motion_process(img_shape, L):
         H[int(poz_x), int(poz_y-offset)] = 1
     return H / H.sum()
 
+
 def make_blurred(input, H, eps):
     '''motion blur img'''
     input_fft = fft.fft2(input)
