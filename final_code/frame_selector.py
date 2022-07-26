@@ -20,8 +20,6 @@ class Frame_selector:
         ''' criterion'''
         self.sift_thres = None       # threshold of ratio test
         self.interest_thres = None   # threshold of number of interest points
-        
-        self.motion = []             # translation motion of the selected frames
 
     def set_path(self, path=None):
         self.path = path
@@ -34,11 +32,15 @@ class Frame_selector:
         if self.fps is not None:
             return 1 / self.fps
 
+    def add_all_frames_to_selected_frames(self):
+        for idx in range(1,self.L-1):
+            self.selected_frames.append(idx) 
+        return self.selected_frames
 
     # video methods --------------------------------------------------------------------------------
 
     def load_vedio(self, proxy_compress=4, rotate=True):
-        ''' read video file, return ndarray containing frames'''
+        ''' read video file, return lists containing frames'''
         print('-start loading video...')
         capture = cv2.VideoCapture(self.path) 
         self.fps = capture.get(cv2.CAP_PROP_FPS)
@@ -90,6 +92,9 @@ class Frame_selector:
 
     # selecting frames ---------------------------------------------
 
+    def out_sift_matching(self, img1, img2, threshold: float):
+        return self.__sift_matching(img1, img2, threshold)
+
     def __sift_matching(self, img1, img2, threshold: float):
         '''find interest pairs using the SIFT algorithm'''
 
@@ -122,23 +127,24 @@ class Frame_selector:
         return (img3, good_indexes, keypoints_1, keypoints_2)
 
 
-    def __reach_critirion(self, idx1, idx2):
+    def __reach_criterion(self, idx1, idx2):
         ''' check if two frame_set has at least 10 interest pts with small threshold'''
         frame1 = self.frames_proxy[idx1]
         frame2 = self.frames_proxy[idx2]
         img3, good_indexes, kps1, kps2 = self.__sift_matching(frame1, frame2, self.sift_thres)
         # cv2.imwrite('match_demo_{}-{}.png'.format(idx1,idx2), np.uint8(img3))
-        # two different criterion for matching -------
+        # different criterion for matching -------
         reach = len(good_indexes) > (len(kps1) + len(kps2)) / self.interest_thres
         reach1 = len(good_indexes) > 15 * self.interest_thres * np.log1p((idx2-idx1)) / self.L
-
-        return reach1
+        reach2 = len(good_indexes) > 6 * self.interest_thres * (idx2-idx1) / self.L
+       
+        return reach2
 
     # binary search on frame_set -------------------------------------------------
 
     def search_frames(self):
         ''' search in all the frames'''
-        self._search_frames(2, self.L-3)
+        self._search_frames(1, self.L-2)
 
     def _search_frames(self, start: int, end: int):
         ''' do binary search on frame_set
@@ -157,7 +163,7 @@ class Frame_selector:
     def __search(self, idx1, idx2):
         ''' recursive search'''
         
-        if ((idx2-idx1 < 2) or self.__reach_critirion(idx1, idx2))\
+        if ((idx2-idx1 < 2) or self.__reach_criterion(idx1, idx2))\
             and (idx2-idx1) < self.L//2:
             # criterion reached 
             return              
@@ -170,7 +176,7 @@ class Frame_selector:
             
     # def __search(self, idx1, idx2):
     #     ''' recursive search'''
-    #     if (idx2-idx1 < 2) or self.__reach_critirion(idx1, idx2):
+    #     if (idx2-idx1 < 2) or self.__reach_criterion(idx1, idx2):
     #         # criterion reached
     #         if idx1 == idx2:
     #             self.selected_frames.append(idx1)
@@ -188,7 +194,7 @@ class Frame_selector:
     # output --------------------------------------------------------
 
     def output_selected_frames(self, save=False, if_original=False):
-        ''' imshow and return selected frames, save if save==True'''
+        ''' imshow and return selected frames, save to disk if save==True'''
         # choose if output uncompressed img
         frame_set = {True: self.frames_origin, 
                      False: self.frames_proxy}[if_original]

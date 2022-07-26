@@ -11,8 +11,8 @@ def motion_process(img_shape, L):
     H = np.zeros(img_shape)
     poz_x = (img_shape[0] - 1) / 2
     poz_y = (img_shape[1] - 1) / 2    
-    for offset in range(L):
-        H[int(poz_x), int(poz_y-offset)] = 1
+    # for offset in range(L):
+    H[int(poz_x), int(poz_y-L):int(poz_y)] = 1
     return H / H.sum()
 
 def make_blurred(input, H, eps):
@@ -44,7 +44,7 @@ def wiener_filter(img, H, K):
     return result
 
 
-def wiener_deblur_color(blurred, L=35, K=0.1):
+def wiener_deblur_color0(blurred, L=35, K=0.1):
     '''deblur color img (wiener filter)'''
     H = motion_process(blurred.shape[:2], L)
     result = np.zeros_like(blurred)
@@ -53,6 +53,26 @@ def wiener_deblur_color(blurred, L=35, K=0.1):
         layer[layer > 255] = 255
         result[:,:,i] = layer
     return result
+
+
+def wiener_deblur_color(blurred, v, T, K, mask):
+    '''deblur color img (wiener filter)'''   
+    L = int(v * T)
+    # print('blur L: ', L)
+    if L < 5:
+        # if the blur is too smaller than `20` pixels, skip deblur
+        print('--skip--')
+        return blurred  
+
+    H = motion_process(blurred.shape[:2], L)
+    result = np.zeros_like(blurred)
+    for i in range(3):
+        channel = wiener_filter(blurred[:,:,i], H, K)
+        channel[mask==1] = 0
+        channel[channel > 255] = 255
+        result[:,:,i] = channel
+    return result
+    
 
 def inverse_deblur_color(blurred, L=35, eps=1e-3):
     '''deblur color img (inverse filter)'''
@@ -65,9 +85,13 @@ def inverse_deblur_color(blurred, L=35, eps=1e-3):
     return result
 
 def test():
-    img = cv2.imread('frame_50.png')
+    img = cv2.imread('test_blur_21_6.png')
     # img = cylindricalWarping(img, 1503)
-    res_wie = wiener_deblur_color(img, L=28, K=0.05)
+    spatial_filter = motion_process(img.shape[:2], 30)
+    # spatial_filter[spatial_filter!=0] = 255
+    cv2.imwrite('filter1.png', np.uint8(spatial_filter))
+
+    res_wie = wiener_deblur_color0(img, L=12, K=0.05)
     res_inv = inverse_deblur_color(img, L=28)
 
     plt.figure(figsize=(10,10))
@@ -75,6 +99,7 @@ def test():
     plt.imshow(img)
     plt.subplot(132)
     plt.imshow(res_wie)
+    cv2.imwrite('deblurred.png', np.uint8(res_wie))
     plt.subplot(133)
     plt.imshow(res_inv)
     plt.show()
@@ -97,5 +122,5 @@ def test():
     # plt.show()
 
 
-# if __name__ == '__main__':
-#     test()
+if __name__ == '__main__':
+    test()
