@@ -231,34 +231,34 @@ class Frame_selector:
 
 ## -----------------------------------------------------------------
 
+'''
+if __name__ == '__main__':
 
-# if __name__ == '__main__':
-
-#     FF = Frame_selector()
-#     FF.set_path('videos\\7.14_1.MOV') 
-#     # FF.load_vedio(proxy_compress=5)
-#     # FF.set_threshold(sift_thres=0.5, interest_thres=10)
-#     ## FF.play_video()
-#     ## FF.show_frame(100)
-#     # FF.search_frames()
-#     # FF.print_selected()
-#     frames = FF.output_selected_frames(if_original=False)
+    FS = Frame_selector()
+    FS.set_path('videos\\7.19_3.MOV') 
+    # FS.load_vedio(proxy_compress=5)
+    # FS.set_threshold(sift_thres=0.5, interest_thres=10)
+    ## FS.play_video()
+    ## FS.show_frame(100)
+    # FS.search_frames()
+    # FS.print_selected()
+    # frames = FS.output_selected_frames(if_original=False)
 
 
-#     FF.run_select_frame(proxy_compress=3,
-#                         sift_thres=0.3,
-#                         interest_thres=200)
+    FS.run_select_frame(proxy_compress=3,
+                        sift_thres=0.5,
+                        interest_thres=30)
 
-#     neigb_frames = FF.out_neighb_frames()
+    # neigb_frames = FS.out_neighb_frames()
 
-#     FF.output_selected_frames(save=True)
+    FS.output_selected_frames(save=True)
 
-#     # img1, img2 = frames[1], frames[2]
-#     # (img3, good_indexes, keypoints_1, keypoints_2) = FF.__sift_matching(img1, img2, threshold=0.5)
-#     # cv2.imshow(img3)
-#     # cv2.imwrite('match_demo_0.png', np.uint8(img3))
-#     # cv2.waitKey(0)
-
+    # img1, img2 = frames[1], frames[2]
+    # (img3, good_indexes, keypoints_1, keypoints_2) = FS.__sift_matching(img1, img2, threshold=0.5)
+    # cv2.imshow(img3)
+    # cv2.imwrite('match_demo_0.png', np.uint8(img3))
+    # cv2.waitKey(0)
+'''
 
 
 

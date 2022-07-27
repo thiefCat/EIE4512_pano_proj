@@ -8,14 +8,16 @@ from frame_selector import Frame_selector
 import velocity
 import motion_deblur
 
+
 print('-------selecting frames-------')
 FS = Frame_selector()
-FS.set_path('videos\\7.19_2.MOV')
-FS.set_path('videos\\7.21_6.MOV')
-# FS.set_path('videos\\7.21_3.MOV')
+# FS.set_path('videos\\7.19_2.MOV')
+# FS.set_path('videos\\7.21_6.MOV')
+FS.set_path('videos\\7.21_3.MOV')
 imgs = FS.run_select_frame(proxy_compress=3,
                            sift_thres=0.5,
-                           interest_thres=40)
+                           interest_thres=30)
+
 
 print('------cylindrical warping------')
 f = get_f(24, 3/5, 1080, 3000, 2160)
@@ -23,6 +25,7 @@ for i in range(len(imgs)):
     img = imgs[i]
     img = mycyl.cylindricalWarping(img, f)
     imgs[i] = img
+
 
 print('-----deblurring------')
 pattern = np.amax(imgs[0], axis=2)
@@ -32,7 +35,7 @@ mask[pattern == 0] = 1
 
 neighbors = FS.out_neighb_frames()
 
-T = 1/35 # exposure time
+T = 1/1000 # exposure time
 
 for i in range(len(imgs)):
     # calculate velocity of selected frames
@@ -45,9 +48,10 @@ for i in range(len(imgs)):
 
     # deblurring with masks
     mask_tmp = mask.copy()
-    mask_tmp[:,:int(v/9)] = 1 
+    mask_tmp[:,:int(v/8)] = 1 
     img = motion_deblur.wiener_deblur_color(img, v, T, 0.1, mask_tmp)
     imgs[i] = img
+
 
 print('-----stitching images------')
 stitcher = image_stitching.Stitcher()
@@ -59,4 +63,7 @@ plt.show()
 
 # save the result
 res = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
+# cv2.imshow('', res[900:1500, 2700:3300])
+# cv2.waitKey(0)
+# cv2.imwrite('undeblur_section.png', np.uint8(res[900:1500, 2700:3300]))
 cv2.imwrite('panorama_out.png', np.uint8(res))
