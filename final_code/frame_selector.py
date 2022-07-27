@@ -39,7 +39,7 @@ class Frame_selector:
 
     # video methods --------------------------------------------------------------------------------
 
-    def load_vedio(self, proxy_compress=4, rotate=True):
+    def load_vedio(self, proxy_compress=4, rotate=False):
         ''' read video file, return lists containing frames'''
         print('-start loading video...')
         capture = cv2.VideoCapture(self.path) 
