@@ -18,7 +18,7 @@ The code for this project is in final_code folder. You can prepare the video by 
   ```
 
 ## Sample Result
-The image stitching result for a pair of images:
+Matching two images by SIFT and RANSAC:
 
 <img src="report/images/4_match_demo_134-154.png" width="300" height="300">
 
