@@ -8,5 +8,33 @@ Panorama construction is an essential research topic in digital image processing
 
 Key points of the implementation are explained in details in the [report](https://github.com/thiefCat/EIE4512_pano_proj/blob/main/report/Group_8_report.pdf)
 
+## How to run
+The code for this project is in final_code folder. You can prepare the video by yourself or use our videos in the videos folder. Please note that the video should be recorded from left to right, and keep the recorded horizontal.
 
-## Contents
+  ```bash
+  git clone https://github.com/nikitakaraevv/pointnet
+  cd pointnet/final_code
+  python main.py 
+  ```
+
+## Sample Result
+The image stitching result for a pair of images:
+
+<img src="report/images/4_match_demo_134-154.png" width="300" height="300">
+
+
+The image stitching result for a sequence of images by homography:
+
+<img src="report/images/1.png" width="300" height="400">
+
+
+The image stitching result for a sequence of images after cylindrical projection:
+
+<img src="report/images/5.png" width="300" height="500">
+
+
+Even longer panorama:
+
+<img src="report/images/pano21_3.png" width="189" height="858">
+
+
