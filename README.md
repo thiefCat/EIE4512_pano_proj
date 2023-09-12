@@ -25,16 +25,16 @@ The image stitching result for a pair of images:
 
 The image stitching result for a sequence of images by homography:
 
-<img src="report/images/1.png" width="300" height="400">
+<img src="report/images/1.png" width="400" height="300">
 
 
 The image stitching result for a sequence of images after cylindrical projection:
 
-<img src="report/images/5.png" width="300" height="500">
+<img src="report/images/5.png" width="500" height="300">
 
 
 Even longer panorama:
 
-<img src="report/images/pano21_3.png" width="189" height="858">
+<img src="report/images/pano21_3.png" width="858" height="189">
 
 
