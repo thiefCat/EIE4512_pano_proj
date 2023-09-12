@@ -38,3 +38,8 @@ Even longer panorama:
 <img src="report/images/pano21_3.png" width="858" height="189">
 
 
+Deblurred panorama:
+
+<img src="report/images/pano21_6.png" width="623" height="190">
+
+
