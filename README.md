@@ -7,4 +7,5 @@ Panorama construction is an essential research topic in digital image processing
 <img src="report/images/pipeline.png" width="500" height="200">
 Key points of the implementation are explained in details in the [report](https://github.com/thiefCat/EIE4512_pano_proj/blob/main/report/Group_8_report.pdf)
 
+
 ## Contents
