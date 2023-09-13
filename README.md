@@ -17,8 +17,8 @@ The code for this project is in final_code folder. You can prepare the video by 
   python main.py 
   ```
 
-## Sample Result
-Matching two images by SIFT and RANSAC:
+## Sample Results
+Matching two images by SIFT and RANSAC Algorithms:
 
 <img src="report/images/4_match_demo_134-154.png" width="300" height="300">
 
